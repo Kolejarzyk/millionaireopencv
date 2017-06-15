@@ -10,7 +10,8 @@
 using namespace cv;
 using namespace std;
 
-void detectAndDisplay(Mat frame, string nameFrame);
+void faceDetection(Mat frame, string nameFrame);
+void colorDetection(Mat frame, string nameFrame);
 
 CascadeClassifier face_cascade;
 String face_cascade_name = "haarcascade_frontalface_alt.xml";
@@ -93,15 +94,26 @@ int main() {
 			2,
 			8);
 
-
-
-		putText(imgOriginal, "A. Zalosne!!!", Point(330,380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(imgOriginal, "Czy jest mozliwosc zdania z NAI?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+		putText(imgOriginal, "A. Zalosne!!!", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+		putText(imgOriginal, "B. Zalosne!!!", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
-		detectAndDisplay(imgOriginal, "imgOriginal");
+		putText(imgOriginal, "C. Zalosne!!!", Point(350,380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		putText(imgOriginal, "D. Zalosne!!!", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		faceDetection(imgOriginal, "imgOriginal");
+		colorDetection(imgOriginal, "imgOriginal");
+	      
 											  // declare windows
 		namedWindow("imgOriginal", CV_WINDOW_NORMAL);       // note: you can use CV_WINDOW_NORMAL which allows resizing the window
-		namedWindow("imgCanny", CV_WINDOW_NORMAL);          // or CV_WINDOW_AUTOSIZE for a fixed size window matching the resolution of the image
+		namedWindow("imgCanny", CV_WINDOW_NORMAL); 
+		// or CV_WINDOW_AUTOSIZE for a fixed size window matching the resolution of the image
 												
 															
 															// CV_WINDOW_AUTOSIZE is the default
@@ -123,7 +135,7 @@ int main() {
 	return(0);
 }
 
-void detectAndDisplay(Mat frame,string nameFrame)
+void faceDetection(Mat frame,string nameFrame)
 {
 	vector<Rect> faces;
 	Mat frame_gray;
@@ -141,4 +153,17 @@ void detectAndDisplay(Mat frame,string nameFrame)
 	}
 	//-- Show what you got
 	imshow(nameFrame, frame);
+}
+
+void colorDetection(Mat frame,string nameFrame) // funkcja do trackingu koloru
+{
+	Mat color;
+	Mat range;
+	namedWindow("Object Detection", CV_WINDOW_NORMAL);
+	cvtColor(frame, color , COLOR_BGR2HSV);
+	inRange(color, Scalar(0, 100, 100), Scalar(10, 255, 255), range);
+	imshow(nameFrame, frame);
+	imshow("Object Detecion", range);
+
+	
 }
