@@ -131,6 +131,24 @@ int main() {
 
 		
 	}   // end while
+	while (true)
+	{
+		double count = capWebcam.get(CV_CAP_PROP_FRAME_COUNT); 
+		capWebcam.set(CV_CAP_PROP_POS_FRAMES, count - 1); 
+		namedWindow("MyVideo", CV_WINDOW_AUTOSIZE);
+
+
+		Mat frame;
+		bool success = capWebcam.read(frame);
+		if (!success) {
+			cout << "Cannot read  frame " << endl;
+			break;
+		}	
+
+		imshow("MyVideo", frame);
+		if (waitKey(0) == 27) break;
+	}	
+
 	
 	return(0);
 }
@@ -157,13 +175,37 @@ void faceDetection(Mat frame,string nameFrame)
 
 void colorDetection(Mat frame,string nameFrame) // funkcja do trackingu koloru
 {
+
+	int low_r = 0, low_g = 100, low_b = 100;
+	int high_r = 10, high_g = 255, high_b = 255;
+
 	Mat color;
 	Mat range;
 	namedWindow("Object Detection", CV_WINDOW_NORMAL);
 	cvtColor(frame, color , COLOR_BGR2HSV);
-	inRange(color, Scalar(0, 100, 100), Scalar(10, 255, 255), range);
-	imshow(nameFrame, frame);
-	imshow("Object Detecion", range);
-
+	inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), range);
 	
+	imshow("Object Detecion", range);
+	
+	
+	for (int i = 0; i<frame.rows; i++)
+	{
+		for (int j = 0; j<frame.cols; j++)
+		{
+			Vec3b colour = frame.at<Vec3b>(Point(320, 320));
+			if (colour.val[0] == low_r && colour.val[1] == low_g && colour.val[2] == low_b)
+			{
+
+				rectangle(frame,
+					Point(320, 320),
+					Point(640, 400),           // A
+					Scalar(0, 255, 255),
+					-1,
+					8);
+				
+			}
+		}
+	}
 }
+
+
