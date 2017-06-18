@@ -10,26 +10,29 @@
 using namespace cv;
 using namespace std;
 
-void faceDetection(Mat frame, string nameFrame);
-void colorDetection(Mat frame, string nameFrame);
+void faceDetection(Mat &frame, string nameFrame);
+void colorDetection(Mat &frame, string nameFrame, int low_r, int low_g, int low_b, int high_r, int high_g, int high_b);
 
 CascadeClassifier face_cascade;
 String face_cascade_name = "haarcascade_frontalface_alt.xml";
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 int main() {
-	cv::VideoCapture capWebcam(0);            // kamera
+	VideoCapture capWebcam(0);            // kamera
 
 	if (capWebcam.isOpened() == false) {                                // czy kamera jest 
-		std::cout << "error: capWebcam not accessed successfully\n\n";     
+		cout << "error: capWebcam not accessed successfully\n\n";     
 		_getch();                                                          
 		return(0);                                                          
 	}
 
+	int low_r = 0, low_g = 100, low_b = 100;
+	int high_r = 10, high_g = 255, high_b = 255;
 
 	Mat imgOriginal;        // input image
 	Mat imgGrayscale;       // grayscale of input image
 	Mat imgBlurred;         // intermediate blured image
 	Mat imgCanny;           // Canny edge image
+
 
 	capWebcam.set(CAP_PROP_FRAME_WIDTH, 640);  // ustawienie rozmiaru wyœwietlanego obrazu
 	capWebcam.set(CAP_PROP_FRAME_HEIGHT, 480);
@@ -96,19 +99,19 @@ int main() {
 
 		putText(imgOriginal, "Czy jest mozliwosc zdania z NAI?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(imgOriginal, "A. Zalosne!!!", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(imgOriginal, "A. Oczywiœcie!!!", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(imgOriginal, "B. Zalosne!!!", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-
-		putText(imgOriginal, "C. Zalosne!!!", Point(350,380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(imgOriginal, "B. Raczej nie!!!", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
-		putText(imgOriginal, "D. Zalosne!!!", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(imgOriginal, "C. Ewidetnie nie!!!", Point(350,380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		putText(imgOriginal, "D. Raczej nie!!!", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
 		faceDetection(imgOriginal, "imgOriginal");
-		colorDetection(imgOriginal, "imgOriginal");
+		colorDetection(imgOriginal, "imgOriginal",low_r,low_g,low_b,high_r,high_g,high_b);
 	      
 											  // declare windows
 		namedWindow("imgOriginal", CV_WINDOW_NORMAL);       // note: you can use CV_WINDOW_NORMAL which allows resizing the window
@@ -118,17 +121,12 @@ int main() {
 															
 															// CV_WINDOW_AUTOSIZE is the default
 
-
-			imshow("imgOriginal", imgOriginal);
-			imshow("imgCanny", imgCanny);
+		imshow("imgOriginal", imgOriginal);
+		imshow("imgCanny", imgCanny);
 
 			
-			if (waitKey(1) == 27)
-				break;
-		
-		                // show windows
-		                     //
-
+		if (waitKey(1) == 27)
+		break;		
 		
 	}   // end while
 	while (true)
@@ -153,7 +151,7 @@ int main() {
 	return(0);
 }
 
-void faceDetection(Mat frame,string nameFrame)
+void faceDetection(Mat &frame,string nameFrame)
 {
 	vector<Rect> faces;
 	Mat frame_gray;
@@ -165,47 +163,47 @@ void faceDetection(Mat frame,string nameFrame)
 	{
 		Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
 		ellipse(frame, center, Size(faces[i].width / 2, faces[i].height / 2), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
-		Mat faceROI = frame_gray(faces[i]);
-		vector<Rect> eyes;
-
 	}
 	//-- Show what you got
 	imshow(nameFrame, frame);
 }
 
-void colorDetection(Mat frame,string nameFrame) // funkcja do trackingu koloru
+void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, int high_r ,int high_g,int high_b) // funkcja do trackingu koloru
 {
 
-	int low_r = 0, low_g = 100, low_b = 100;
-	int high_r = 10, high_g = 255, high_b = 255;
+	
 
 	Mat color;
-	Mat range;
+	Mat redMask;
 	namedWindow("Object Detection", CV_WINDOW_NORMAL);
 	cvtColor(frame, color , COLOR_BGR2HSV);
-	inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), range);
-	
-	imshow("Object Detecion", range);
+	inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), redMask);
 	
 	
-	for (int i = 0; i<frame.rows; i++)
-	{
-		for (int j = 0; j<frame.cols; j++)
+	
+	
+		for (int i = 0; i < frame.rows; i++)
 		{
-			Vec3b colour = frame.at<Vec3b>(Point(320, 320));
-			if (colour.val[0] == low_r && colour.val[1] == low_g && colour.val[2] == low_b)
+			for (int j = 0; j < frame.cols; j++)
 			{
+				Vec3b colour = redMask.at<Vec3b>(Point(100, 380));
+				if ((colour.val[0] >= low_r  && colour.val[0] <= high_r)  && (colour.val[1] >= low_g && colour.val[1] <= high_g) && (colour.val[2] >= low_b && colour.val[2] <= high_b))
+				{
 
-				rectangle(frame,
-					Point(320, 320),
-					Point(640, 400),           // A
-					Scalar(0, 255, 255),
-					-1,
-					8);
-				
+					rectangle(frame,     // Po najechaniu koloru na ten punkt , zmienia siê 
+						Point(320, 320),
+						Point(640, 400),
+						Scalar(255, 255, 255),
+						-1,
+						8);
+					break;
+					updateWindow("imgOriginal");
+				}
 			}
-		}
+		
 	}
+
+	imshow("Object Detecion", redMask);
 }
 
 
