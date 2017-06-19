@@ -12,6 +12,9 @@ using namespace std;
 
 void faceDetection(Mat &frame, string nameFrame);
 void colorDetection(Mat &frame, string nameFrame, int low_r, int low_g, int low_b, int high_r, int high_g, int high_b);
+void firstQuestionFrame(Mat &frame);
+void ocenaFrame(Mat &frame);
+void exitOrForwardFrame(Mat &frame, VideoCapture &capWebcam);
 
 CascadeClassifier face_cascade;
 String face_cascade_name = "haarcascade_frontalface_alt.xml";
@@ -62,54 +65,8 @@ int main() {
 			50,                               // low threshold
 			100);                             // high threshold
 
-		 rectangle(imgOriginal,
-			Point(320, 400),
-			Point(640, 480),                   //  D
-			Scalar(0, 255, 255),
-			2,
-			8);
-	
-		rectangle(imgOriginal,
-			Point(0, 480),
-			Point(320, 400),                 //  C
-			Scalar(0, 255, 255),
-			2,
-			8);
-
-		rectangle(imgOriginal,
-			Point(0, 320),
-			Point(640, 400),                  // B
-			Scalar(0, 255, 255),
-			2,
-			8);
-
-		rectangle(imgOriginal,
-			Point(320, 320),
-			Point(640, 400),           // A
-			Scalar(0, 255, 255),
-			2,
-			8);
-
-		rectangle(imgOriginal,
-			Point(0, 220),
-			Point(640, 320),           // Pytanie
-			Scalar(0, 255, 255),
-			2,
-			8);
-
-		putText(imgOriginal, "Czy jest mozliwosc zdania z NAI?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-		putText(imgOriginal, "A. Oczywiœcie!!!", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-		putText(imgOriginal, "B. Raczej nie!!!", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-
-		putText(imgOriginal, "C. Ewidetnie nie!!!", Point(350,380), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-
-		putText(imgOriginal, "D. Raczej nie!!!", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-
+		
+		firstQuestionFrame(imgOriginal);
 		faceDetection(imgOriginal, "imgOriginal");
 		colorDetection(imgOriginal, "imgOriginal",low_r,low_g,low_b,high_r,high_g,high_b);
 	      
@@ -120,31 +77,19 @@ int main() {
 												
 															
 															// CV_WINDOW_AUTOSIZE is the default
-
+		
 		imshow("imgOriginal", imgOriginal);
 		imshow("imgCanny", imgCanny);
-
+	
+		
 			
-		if (waitKey(1) == 27)
+		if (waitKey(30) == 27)
 		break;		
 		
 	}   // end while
 	while (true)
 	{
-		double count = capWebcam.get(CV_CAP_PROP_FRAME_COUNT); 
-		capWebcam.set(CV_CAP_PROP_POS_FRAMES, count - 1); 
-		namedWindow("MyVideo", CV_WINDOW_AUTOSIZE);
-
-
-		Mat frame;
-		bool success = capWebcam.read(frame);
-		if (!success) {
-			cout << "Cannot read  frame " << endl;
-			break;
-		}	
-
-		imshow("MyVideo", frame);
-		if (waitKey(0) == 27) break;
+		
 	}	
 
 	
@@ -177,17 +122,23 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 	Mat redMask;
 	namedWindow("Object Detection", CV_WINDOW_NORMAL);
 	cvtColor(frame, color , COLOR_BGR2HSV);
-	inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), redMask);
+	inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), redMask);	
+
 	
-	
-	
-	
-		for (int i = 0; i < frame.rows; i++)
+	for (int i = 0; i < color.rows; i++)
+	{
+		for (int j = 0; j < color.cols; j++)
 		{
-			for (int j = 0; j < frame.cols; j++)
+
+			if (i == 100 && j == 380)
 			{
-				Vec3b colour = redMask.at<Vec3b>(Point(100, 380));
-				if ((colour.val[0] >= low_r  && colour.val[0] <= high_r)  && (colour.val[1] >= low_g && colour.val[1] <= high_g) && (colour.val[2] >= low_b && colour.val[2] <= high_b))
+				Vec3b hsv = color.at<Vec3b>(100, 380);
+				int H = hsv.val[0];
+				int S = hsv.val[1];
+				int V = hsv.val[2];
+
+
+				if ((H >= low_b && H <= high_b) && (S >= low_g && S <= high_g) && (V >= low_r && V <= high_r))
 				{
 
 					rectangle(frame,     // Po najechaniu koloru na ten punkt , zmienia siê 
@@ -196,14 +147,172 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 						Scalar(255, 255, 255),
 						-1,
 						8);
-					break;
-					updateWindow("imgOriginal");
+			
+	
+
 				}
 			}
-		
-	}
+		}
 
+	}
 	imshow("Object Detecion", redMask);
 }
 
+void ocenaFrame(Mat &frame)
+{ 
+	while (true)
+	{
 
+
+		rectangle(frame,
+			Point(320, 400),
+			Point(640, 480),                   //  D
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		rectangle(frame,
+			Point(0, 480),
+			Point(320, 400),                 //  C
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		rectangle(frame,
+			Point(0, 320),
+			Point(640, 400),                  // B
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		rectangle(frame,
+			Point(320, 320),
+			Point(640, 400),           // A
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		rectangle(frame,
+			Point(0, 220),
+			Point(640, 320),           // Pytanie
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		putText(frame, "Jaka ocena zdecydowanie ci siê nale¿y?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+		putText(frame, "A. Na pewno nie 2 :P ", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+		putText(frame, "B. 3 bêdzie odpowiednie ", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		putText(frame, "C. 4 to chyba za du¿o", Point(350, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		putText(frame, "D. 5 to chyba dla ambitnych jest", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+	}
+
+}
+
+void firstQuestionFrame(Mat &frame)
+{
+	rectangle(frame,
+		Point(320, 400),
+		Point(640, 480),                   //  D
+		Scalar(0, 255, 255),
+		2,
+		8);
+
+	rectangle(frame,
+		Point(0, 480),
+		Point(320, 400),                 //  C
+		Scalar(0, 255, 255),
+		2,
+		8);
+
+	rectangle(frame,
+		Point(0, 320),
+		Point(640, 400),                  // B
+		Scalar(0, 255, 255),
+		2,
+		8);
+
+	rectangle(frame,
+		Point(320, 320),
+		Point(640, 400),           // A
+		Scalar(0, 255, 255),
+		2,
+		8);
+
+	rectangle(frame,
+		Point(0, 220),
+		Point(640, 320),           // Pytanie
+		Scalar(0, 255, 255),
+		2,
+		8);
+
+	putText(frame, "Czy jest mozliwosc zdania z NAI?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		Scalar(255, 255, 255), 1, 8);
+	putText(frame, "A. Oczywiœcie!!!", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		Scalar(255, 255, 255), 1, 8);
+	putText(frame, "B. Raczej nie!!!", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		Scalar(255, 255, 255), 1, 8);
+
+	putText(frame, "C. Ewidetnie nie!!!", Point(350, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		Scalar(255, 255, 255), 1, 8);
+
+	putText(frame, "D. Raczej nie!!!", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		Scalar(255, 255, 255), 1, 8);
+}
+ 
+
+void exitOrForwardFrame(Mat &frame, VideoCapture &capWebcam)
+{
+	while (true)
+	{
+		double count = capWebcam.get(CV_CAP_PROP_FRAME_COUNT);
+		capWebcam.set(CV_CAP_PROP_POS_FRAMES, count - 1);
+		namedWindow("MyVideo", CV_WINDOW_AUTOSIZE);
+
+
+		Mat frame;
+		bool success = capWebcam.read(frame);
+		if (!success) {
+			cout << "Cannot read  frame " << endl;
+			break;
+		}
+
+		putText(frame, "Zaliczy³eœ ju¿ przedmio?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+		putText(frame, "A. Tak Dziêkuje :D ", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+		putText(frame, "B. Tutaj nie ma innej odopwiedzi tak zda³eœ ", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		rectangle(frame,
+			Point(0, 320),
+			Point(640, 400),                  // B
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		rectangle(frame,
+			Point(320, 320),
+			Point(640, 400),           // A
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		rectangle(frame,
+			Point(0, 220),
+			Point(640, 320),           // Pytanie
+			Scalar(0, 255, 255),
+			2,
+			8);
+
+		imshow("MyVideo", frame);
+		if (waitKey(30) == 27) break;
+
+	}
+}
