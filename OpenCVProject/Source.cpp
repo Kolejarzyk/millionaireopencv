@@ -2,7 +2,6 @@
 #include<opencv2/highgui/highgui.hpp>
 #include<opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect.hpp>
-
 #include<iostream>
 #include<conio.h>           // may have to modify this line if not using Windows
 
@@ -10,7 +9,7 @@
 using namespace cv;
 using namespace std;
 
-void faceDetection(Mat &frame, string nameFrame);
+void faceDetection(Mat &frame, string nameFrame, vector<Rect> &faces);
 void colorDetection(Mat &frame, string nameFrame, int low_r, int low_g, int low_b, int high_r, int high_g, int high_b, VideoCapture &capWebcam);
 void firstQuestionFrame(Mat &frame);
 void ocenaFrame(Mat &frame, VideoCapture &capWebcam);
@@ -30,7 +29,7 @@ int main() {
 
 	int low_r = 100, low_g = 150, low_b = 0;
 	int high_r = 140, high_g = 255, high_b = 255;
-
+	vector<Rect> faces;
 	Mat imgOriginal;        // input image
 	Mat imgGrayscale;       // grayscale of input image
 	Mat imgBlurred;         // intermediate blured image
@@ -72,23 +71,19 @@ int main() {
 		
 
 		firstQuestionFrame(imgOriginal);
-			//faceDetection(imgOriginal, "imgOriginal");
+	    faceDetection(imgOriginal, "imgOriginal",faces);
 		colorDetection(imgOriginal, "imgOriginal", low_r, low_g, low_b, high_r, high_g, high_b, capWebcam);
-			
-		
-	      
-											  // declare windows
-		
-		// or CV_WINDOW_AUTOSIZE for a fixed size window matching the resolution of the image
-												
-															
+		if (faces.size() == 0)
+		{
+			putText(imgOriginal, "Nie ma zawodnika", Point(50, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+				Scalar(255, 255, 255), 1, 8);
+		}									  // declare windows	
+		// or CV_WINDOW_AUTOSIZE for a fixed size window matching the resolution of the image											
 															// CV_WINDOW_AUTOSIZE is the default
-		
 		imshow("imgOriginal", imgOriginal);
 		imshow("imgCanny", imgCanny);
 	
 		
-			
 		if (waitKey(30) == 27)
 		break;		
 		
@@ -99,10 +94,10 @@ int main() {
 	return(0);
 }
 
-void faceDetection(Mat &frame,string nameFrame)
+void faceDetection(Mat &frame,string nameFrame, vector<Rect> &faces)
 {
 	
-	vector<Rect> faces;
+	
 	Mat frame_gray;
 	cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
 	equalizeHist(frame_gray, frame_gray);
@@ -113,15 +108,7 @@ void faceDetection(Mat &frame,string nameFrame)
 		Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
 		ellipse(frame, center, Size(faces[i].width / 2, faces[i].height / 2), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
 	}
-	if (faces.size() > 0)
-	{
-		rectangle(frame,     // Po najechaniu koloru na ten punkt , zmienia siê 
-			Point(320, 320),
-			Point(640, 400),
-			Scalar(255, 255, 255),
-			-1,
-			8);
-	}
+
 	//-- Show what you got
 	imshow(nameFrame, frame);
 }
@@ -131,7 +118,7 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 	
 		Mat color;
 		Mat redMask;
-		namedWindow("Object Detection", CV_WINDOW_NORMAL);
+	
 		cvtColor(frame, color, COLOR_BGR2HSV);
 		inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), redMask);
 
@@ -142,7 +129,7 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 			{
 
 
-				Vec3b hsv1 = color.at<Vec3b>(100, 380);
+				Vec3b hsv1 = color.at<Vec3b>(Point(100, 380)); // A
 				int H1 = hsv1.val[0];
 				int S1 = hsv1.val[1];
 				int V1 = hsv1.val[2];
@@ -157,13 +144,9 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 						Scalar(255, 0, 0),
 						-1,
 						8);
-
-					ocenaFrame(frame, capWebcam);
-
-
 				}
 
-				Vec3b hsv2 = color.at<Vec3b>(100, 450);
+				Vec3b hsv2 = color.at<Vec3b>(Point(100, 450)); // B
 				int H2 = hsv2.val[0];
 				int S2 = hsv2.val[1];
 				int V2 = hsv2.val[2];
@@ -178,36 +161,22 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 						Scalar(255, 0, 0),
 						-1,
 						8);
-
-					ocenaFrame(frame, capWebcam);
-
-
 				}
 
 
-				Vec3b hsv3 = color.at<Vec3b>(350, 380);
+				Vec3b hsv3 = color.at<Vec3b>(Point(350, 380)); // C
 				int H3 = hsv3.val[0];
 				int S3 = hsv3.val[1];
 				int V3 = hsv3.val[2];
 
 
 				if ((H3 >= low_r && H3 <= high_r) && (S3 >= low_g && S3 <= high_g) && (V3 >= low_b && V3 <= high_b))
-				{
-
-					rectangle(frame,     // Po najechaniu koloru na ten punkt , zmienia siê 
-						Point(0, 480),
-						Point(320, 400),
-						Scalar(255, 0, 0),
-						-1,
-						8);
-
+				{				
 					ocenaFrame(frame, capWebcam);
-
-
 				}
 
 
-				Vec3b hsv4 = color.at<Vec3b>(350, 450);
+				Vec3b hsv4 = color.at<Vec3b>(Point(350, 450)); // D
 				int H4 = hsv4.val[0];
 				int S4 = hsv4.val[1];
 				int V4 = hsv4.val[2];
@@ -222,10 +191,6 @@ void colorDetection(Mat &frame,string nameFrame,int low_r,int low_g, int low_b, 
 						Scalar(255, 0, 0),
 						-1,
 						8);
-
-					ocenaFrame(frame, capWebcam);
-
-
 				}
 			}
 
@@ -241,65 +206,149 @@ void ocenaFrame(Mat &frame, VideoCapture &capWebcam)
 	{
 		double count = capWebcam.get(CV_CAP_PROP_FRAME_COUNT);
 		capWebcam.set(CV_CAP_PROP_POS_FRAMES, count - 1);
-		namedWindow("MyVideo", CV_WINDOW_AUTOSIZE);
+		namedWindow("OcenaFrame", CV_WINDOW_AUTOSIZE);
+		int low_r = 100, low_g = 150, low_b = 0;
+		int high_r = 140, high_g = 255, high_b = 255;
 
-
-		Mat frame;
-		bool success = capWebcam.read(frame);
+		Mat frame1;
+		bool success = capWebcam.read(frame1);
 		if (!success) {
 			cout << "Cannot read  frame " << endl;
 			break;
 		}
 
-		rectangle(frame,
+		rectangle(frame1,
 			Point(320, 400),
 			Point(640, 480),                   //  D
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		rectangle(frame,
+		rectangle(frame1,
 			Point(0, 480),
 			Point(320, 400),                 //  C
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		rectangle(frame,
+		rectangle(frame1,
 			Point(0, 320),
 			Point(640, 400),                  // B
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		rectangle(frame,
+		rectangle(frame1,
 			Point(320, 320),
 			Point(640, 400),           // A
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		rectangle(frame,
+		rectangle(frame1,
 			Point(0, 220),
 			Point(640, 320),           // Pytanie
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		putText(frame, "Jaka ocena zdecydowanie ci sie nalezy?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame1, "Jaka ocena zdecydowanie ci sie nalezy?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(frame, "A. Na pewno nie 2 :P ", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame1, "A. Na pewno nie 2 :P ", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(frame, "B. 3 bedzie odpowiednie ", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-
-		putText(frame, "C. 4 to chyba za duzo", Point(350, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame1, "B. 3 bedzie odpowiednie ", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
-		putText(frame, "D. 5 to chyba dla ambitnych jest", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame1, "C. 4 to chyba za duzo", Point(350, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
-		imshow("MyVideo", frame);
+		putText(frame1, "D. 5 to chyba dla ambitnych jest", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
+		Mat color;
+		Mat redMask;
+		
+		cvtColor(frame1, color, COLOR_BGR2HSV);
+		inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), redMask);
+
+
+		for (int i = 0; i < color.rows; i++)
+		{
+			for (int j = 0; j < color.cols; j++)
+			{
+
+
+				Vec3b hsv1 = color.at<Vec3b>(Point(100, 380)); // A
+				int H1 = hsv1.val[0];
+				int S1 = hsv1.val[1];
+				int V1 = hsv1.val[2];
+
+
+				if ((H1 >= low_r && H1 <= high_r) && (S1 >= low_g && S1 <= high_g) && (V1 >= low_b && V1 <= high_b))
+				{
+
+					rectangle(frame1,     // Po najechaniu koloru na ten punkt , zmienia siê 
+						Point(320, 320),
+						Point(640, 400),
+						Scalar(255, 0, 0),
+						-1,
+						8);
+				}
+
+				Vec3b hsv2 = color.at<Vec3b>(Point(100, 450)); // B
+				int H2 = hsv2.val[0];
+				int S2 = hsv2.val[1];
+				int V2 = hsv2.val[2];
+
+
+				if ((H2 >= low_r && H2 <= high_r) && (S2 >= low_g && S2 <= high_g) && (V2 >= low_b && V2 <= high_b))
+				{
+
+					exitOrForwardFrame(frame1, capWebcam);
+				}
+
+
+				Vec3b hsv3 = color.at<Vec3b>(Point(350, 380)); // C
+				int H3 = hsv3.val[0];
+				int S3 = hsv3.val[1];
+				int V3 = hsv3.val[2];
+
+
+				if ((H3 >= low_r && H3 <= high_r) && (S3 >= low_g && S3 <= high_g) && (V3 >= low_b && V3 <= high_b))
+				{
+
+					rectangle(frame1,     // Po najechaniu koloru na ten punkt , zmienia siê 
+						Point(0, 480),
+						Point(320, 400),
+						Scalar(255, 0, 0),
+						-1,
+						8);
+				}
+
+
+				Vec3b hsv4 = color.at<Vec3b>(Point(350, 450)); // D
+				int H4 = hsv4.val[0];
+				int S4 = hsv4.val[1];
+				int V4 = hsv4.val[2];
+
+
+				if ((H4 >= low_r && H4 <= high_r) && (S4 >= low_g && S4 <= high_g) && (V4 >= low_b && V4 <= high_b))
+				{
+
+					rectangle(frame1,     // Po najechaniu koloru na ten punkt , zmienia siê 
+						Point(320, 320),
+						Point(640, 400),
+						Scalar(255, 0, 0),
+						-1,
+						8);
+
+
+
+				}
+			}
+		}
+		imshow("OcenaFrame", frame1);
+
 		if (waitKey(30) == 27) break;
 	}
 
@@ -346,20 +395,17 @@ void firstQuestionFrame(Mat &frame)
 
 		putText(frame, "Czy jest mozliwosc zdania z NAI?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(frame, "A. Oczywiscie!!!", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame, "A. Ewidetnie nie!!!",Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(frame, "B. Raczej nie!!!", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
-			Scalar(255, 255, 255), 1, 8);
-
-		putText(frame, "C. Ewidetnie nie!!!", Point(350, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame, "B. Raczej nie!!!",Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
-		putText(frame, "D. Raczej nie!!!", Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame, "C. Oczywiscie!!!",Point(350, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		
-		
-	
-	
+
+		putText(frame, "D. Nie wiem!!!",Point(350, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+			Scalar(255, 255, 255), 1, 8);
+
 }
  
 
@@ -367,48 +413,87 @@ void exitOrForwardFrame(Mat &frame, VideoCapture &capWebcam)
 {
 	while (true)
 	{
+
 		double count = capWebcam.get(CV_CAP_PROP_FRAME_COUNT);
-		capWebcam.set(CV_CAP_PROP_POS_FRAMES, count - 1);
-		namedWindow("MyVideo", CV_WINDOW_AUTOSIZE);
-
-
-		Mat frame;
-		bool success = capWebcam.read(frame);
+		capWebcam.set(CV_CAP_PROP_POS_FRAMES, count - 2);
+		namedWindow("OcenaFrame", CV_WINDOW_AUTOSIZE);
+		Mat frame2;
+		bool success = capWebcam.read(frame2);
 		if (!success) {
 			cout << "Cannot read  frame " << endl;
 			break;
 		}
 
-		putText(frame, "Zaliczy³eœ ju¿ przedmio?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame2, "Zaliczy³eœ ju¿ przedmiot?", Point(200, 280), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(frame, "A. Tak Dziêkuje :D ", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame2, "A. Tak Dziêkuje :D ", Point(100, 380), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
-		putText(frame, "B. Tutaj nie ma innej odopwiedzi tak zda³eœ ", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
+		putText(frame2, "B. Tutaj nie ma innej odopwiedzi tak zda³eœ ", Point(100, 450), CV_FONT_HERSHEY_COMPLEX, 0.4,
 			Scalar(255, 255, 255), 1, 8);
 
-		rectangle(frame,
+		rectangle(frame2,
 			Point(0, 320),
 			Point(640, 400),                  // B
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		rectangle(frame,
+		rectangle(frame2,
 			Point(320, 320),
 			Point(640, 400),           // A
 			Scalar(0, 255, 255),
 			2,
 			8);
 
-		rectangle(frame,
+		rectangle(frame2,
 			Point(0, 220),
 			Point(640, 320),           // Pytanie
 			Scalar(0, 255, 255),
 			2,
 			8);
+		Mat color;
+		Mat redMask;
+		int low_r = 100, low_g = 150, low_b = 0;
+		int high_r = 140, high_g = 255, high_b = 255;
 
-		imshow("Next Question", frame);
-		
+		cvtColor(frame2, color, COLOR_BGR2HSV);
+		inRange(color, Scalar(low_r, low_g, low_b), Scalar(high_r, high_g, high_b), redMask);
+			
+			
 
-	}
+			for (int i = 0; i < color.rows; i++)
+			{
+				for (int j = 0; j < color.cols; j++)
+				{
+
+
+					Vec3b hsv1 = color.at<Vec3b>(Point(100, 380)); // A
+					int H1 = hsv1.val[0];
+					int S1 = hsv1.val[1];
+					int V1 = hsv1.val[2];
+
+
+					if ((H1 >= low_r && H1 <= high_r) && (S1 >= low_g && S1 <= high_g) && (V1 >= low_b && V1 <= high_b))
+					{
+
+						//system("firefox http://edux.pjwstk.edu.pl");
+
+					}
+
+					Vec3b hsv2 = color.at<Vec3b>(Point(100, 450)); // B
+					int H2 = hsv2.val[0];
+					int S2 = hsv2.val[1];
+					int V2 = hsv2.val[2];
+
+
+					if ((H2 >= low_r && H2 <= high_r) && (S2 >= low_g && S2 <= high_g) && (V2 >= low_b && V2 <= high_b))
+					{
+
+						//system("firefox http://edux.pjwstk.edu.pl");
+
+					}
+
+				}
+			}
+			imshow("ExitFrame", frame2);
 }
